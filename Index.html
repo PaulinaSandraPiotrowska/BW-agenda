@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Weekend Szczyrk — Agenda interaktywna</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Roboto',Arial,sans-serif;font-weight:400;color:#121635;background:#eef0f4;font-size:14px;line-height:1.6}
+  .page{max-width:1080px;margin:0 auto;background:#fff;box-shadow:0 0 40px rgba(18,22,53,.08);}
+
+  /* HEADER — wordmark TC */
+  .header{background:#121635;padding:32px 40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+  .logo-text{color:#fff;font-size:20px;font-weight:300;letter-spacing:0.5px}
+  .logo-text span{font-weight:500}
+  .logo-dot{color:#DC143C;font-size:24px}
+  .logo-sub{color:rgba(255,255,255,0.4);font-size:11px;margin-top:4px;letter-spacing:0.5px}
+  .header-right{text-align:right}
+  .header-label{color:rgba(255,255,255,0.5);font-size:11px;text-transform:uppercase;letter-spacing:1px}
+  .header-title{color:#fff;font-size:16px;font-weight:300;margin-top:2px}
+  .header-title span{font-weight:500;color:#DC143C}
+  .header-note{color:rgba(255,255,255,0.35);font-size:11px;margin-top:2px}
+  .accent-bar{height:4px;background:#DC143C}
+
+  .section{padding:28px 40px;border-bottom:0.5px solid #e8e8ec}
+  .section-title{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:1.5px;color:#DC143C;margin-bottom:16px;display:flex;align-items:center}
+  .sq{width:8px;height:8px;background:#DC143C;display:inline-block;margin-right:8px;position:relative;top:0}
+  .big-title{font-size:22px;font-weight:300;color:#121635;line-height:1.3;margin-bottom:8px}
+  .subtitle{font-size:13px;color:#666}
+
+  /* SELEKTOR DNI */
+  .day-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+  .day-card{border:0.5px solid #ddd;border-radius:4px;padding:14px 16px;cursor:pointer;transition:.15s ease}
+  .day-card:hover{border-color:#121635}
+  .day-card.active{border:1.5px solid #121635;background:#f8f8fa}
+  .dec-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:6px}
+  .day-name{font-size:18px;font-weight:500;color:#121635}
+  .day-date{font-size:12px;color:#666;margin-top:2px}
+  .day-count{display:inline-block;background:#121635;color:#fff;font-size:10px;font-weight:500;padding:2px 8px;border-radius:2px;margin-top:8px}
+
+  .day-panel{display:none}
+  .day-panel.active{display:block}
+
+  /* TABELA AGENDY — oś czasu | Agenda Biznesowa | Akademia Rozwoju */
+  .agenda-table{width:100%;border-collapse:collapse;table-layout:fixed}
+  .agenda-table col.time-col{width:100px}
+  .agenda-table col.content-col{width:auto}
+  .agenda-table thead th{
+    text-align:left;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:#fff;
+    background:#121635;padding:10px 14px;
+  }
+  .agenda-table thead th.aka-head{background:#DC143C}
+  .agenda-table thead th.time-head{background:#f0f1f5;color:#888}
+  .agenda-table td{border-bottom:0.5px solid #eee;padding:12px 14px;vertical-align:top}
+  .agenda-table tr.row-common td{background:#f8f8fa}
+  .time-cell{font-size:12px;font-weight:500;color:#121635;white-space:nowrap;padding-top:14px !important}
+  .empty-cell{background:repeating-linear-gradient(-45deg,#fafafa,#fafafa 6px,#fff 6px,#fff 12px)}
+  .biz-cell{border-left:2px solid #000}
+  .aka-cell{border-left:2px solid #DC143C}
+  .common-cell{border-left:2px solid #bbb}
+
+  .common-badge{display:inline-block;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.6px;color:#888;background:#e8e8ec;padding:2px 7px;border-radius:2px;margin-left:8px;vertical-align:middle}
+
+  .item-time{font-size:10.5px;color:#999;font-weight:400;white-space:nowrap}
+  .item-head{display:flex;align-items:baseline;gap:6px;cursor:default;flex-wrap:wrap}
+  .item-head.clickable{cursor:pointer}
+  .item-title{font-size:13px;font-weight:500;color:#121635}
+  .chev{color:#bbb;font-size:11px;transition:transform .2s ease;flex:none}
+  .chev.small{font-size:10px}
+  .item-head.open .chev{transform:rotate(180deg);color:#DC143C}
+  .tl-place{font-size:11px;color:#999;margin-top:2px}
+  .tl-body{max-height:0;overflow:hidden;transition:max-height .28s ease}
+  .tl-body.open{max-height:2000px;margin-top:8px}
+  .tl-detail{font-size:12px;color:#666;line-height:1.65;white-space:pre-line}
+  .tl-note{font-size:11.5px;color:#777;font-style:italic;margin-top:10px}
+
+  /* OSOBY — imię, firma i grupa zawsze widoczne; tylko opis branży rozwijany */
+  .team-grid{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .person-row{border-left:2px solid #eee;padding:2px 0 2px 8px}
+  .person-head{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+  .person-name{font-size:12px;font-weight:500;color:#121635}
+  .person-role{font-size:10.5px;color:#888}
+  .person-head .chev.small{cursor:pointer}
+  .person-row.open .chev.small{transform:rotate(180deg);color:#DC143C}
+  .person-detail{max-height:0;overflow:hidden;transition:max-height .22s ease}
+  .person-row.open .person-detail{max-height:200px;margin-top:3px}
+  .person-bio{font-size:11px;color:#666;margin-top:1px}
+
+  /* PODŚCIEŻKI — dec-row numerowane, opis rozwijany, prelegenci zawsze widoczni */
+  .subitems{margin-top:10px}
+  .dec-row{border-bottom:0.5px solid #eee;padding:10px 0}
+  .dec-row:last-child{border-bottom:none}
+  .dec-row-head{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:start;cursor:pointer}
+  .dec-row-head.open .chev{transform:rotate(180deg);color:#DC143C}
+  .dec-num{width:22px;height:22px;background:#DC143C;color:#fff;border-radius:50%;font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+  .dec-text{font-size:12.5px;color:#333;line-height:1.5}
+  .dec-text strong{font-weight:500;color:#121635;display:block;margin-bottom:2px}
+  .dec-below{margin-left:34px}
+  .dec-body{max-height:0;overflow:hidden;transition:max-height .25s ease}
+  .dec-body.open{max-height:1000px;margin-top:8px}
+
+  .action-box{background:#f8f8fa;border-left:3px solid #DC143C;padding:14px 18px;margin-top:16px;border-radius:0 4px 4px 0}
+  .action-box p{color:#333;font-size:12.5px;line-height:1.7}
+
+  .footer{display:flex;justify-content:space-between;align-items:center;padding:16px 40px;border-top:0.5px solid #e0e0e8;flex-wrap:wrap;gap:8px}
+  .footer-left{font-size:11px;color:#999}
+  .footer-right{font-size:11px;color:#999}
+
+  @media (max-width:760px){
+    .agenda-table, .agenda-table thead, .agenda-table tbody, .agenda-table th, .agenda-table td, .agenda-table tr{display:block;width:100%}
+    .agenda-table thead{display:none}
+    .agenda-table tr{border-bottom:1px solid #ddd;padding:10px 0}
+    .time-cell{padding-top:0 !important;font-weight:700}
+  }
+
+  @media print{
+    body{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#fff}
+    .page{box-shadow:none}
+    .section{page-break-inside:avoid}
+    @page{margin:0;size:A4}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div>
+      <div class="logo-text">the <span>company</span><span class="logo-dot">.</span></div>
+      <div class="logo-sub">Corporate Connections / BNI+</div>
+    </div>
+    <div class="header-right">
+      <div class="header-label">Prezentacja dla Zarządu</div>
+      <div class="header-title">Business Weekend <span>Szczyrk</span></div>
+      <div class="header-note">6–8 listopada 2026 · Mercure Hotel Szczyrk Resort</div>
+    </div>
+  </div>
+  <div class="accent-bar"></div>
+
+  <div class="section">
+    <div class="section-title"><span class="sq"></span>Agenda programowa</div>
+    <div class="big-title">Pierwsza wspólna edycja Corporate Connections i BNI+</div>
+    <div class="subtitle">Oś czasu po lewej. Agenda Biznesowa i Akademia Rozwoju — obok siebie. Punkty wspólne oznaczone i pokazane raz, na całą szerokość.</div>
+    <div class="day-grid" id="tabs"></div>
+  </div>
+
+  <div id="panels"></div>
+
+  <div class="section">
+    <div class="action-box">
+      <p><strong>Uwaga:</strong> to wersja robocza agendy — do potwierdzenia z Zarządem. Nazwiska w wielu blokach to <strong>propozycje</strong>, nie ostateczna obsada (zgodnie z oznaczeniami w materiale źródłowym). Treść agendy: 1:1 z dokumentem Word (wersja aktualna). Dane osób: HubSpot TC.</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-left">Materiał roboczy — The Company</div>
+    <div class="footer-right">the <strong>company</strong><span style="color:#DC143C">.</span> &nbsp;|&nbsp; Dokument wewnętrzny</div>
+  </div>
+
+</div>
+
+<script>
+/* ===================== DANE OSÓB (opis widoczny na stałe — źródło: HubSpot TC) ===================== */
+const PEOPLE = {
+  "Artur Beck": {role:"Właściciel · United · CC3 Warszawa", bio:"Branża HR i rekrutacyjna. Członek Corporate Connections, grupa CC3 Warszawa."},
+  "Przemysław Krych": {role:"Cornerstone Investment Management · CC+2", bio:"Branża inwestycyjna. Członek Corporate Connections, grupa CC+2."},
+  "Piotr Witek": {role:"Moore Polska · BNI+2 Warszawa", bio:"Branża finansowa. Członek BNI+, grupa BNI+2 Warszawa."},
+  "Dawid Pyszniak": {role:"Compass & Partners · BNI+ Warszawa · Moderator", bio:"Branża doradcza. Członek BNI+ Warszawa, moderator panelu \"Mój przełom\"."},
+  "Adam Malinowski": {role:"Moderator · Fire Chat Think Tank The Company", bio:"Moderator sesji Fire Chat — Think Tank The Company."},
+  "Mateusz Gromek": {role:"Final Milestone Corporate Finance · CC2 Warszawa", bio:"Branża finansowa (M&A, corporate finance). Członek Corporate Connections, grupa CC2 Warszawa."},
+  "Jakub Nowak": {role:"JNT Group · CC1 Warszawa", bio:"Branża spożywcza. Członek Corporate Connections, grupa CC1 Warszawa."},
+  "Adam Rudowski": {role:"Właściciel · Level 2 (Ateli Investments) · CC+1", bio:"Branża inwestycyjna. Członek Corporate Connections, grupa CC+1."},
+  "Jakub Swadźba": {role:"Prezes Zarządu · Diagnostyka S.A. · CC+1", bio:"Branża medyczna i zdrowotna. Członek Corporate Connections, grupa CC+1."},
+  "Wawrzyniec Rajchel": {role:"SPCG · CC2 Kraków", bio:"Branża prawna (kancelaria SPCG). Członek Corporate Connections, grupa CC2 Kraków."},
+  "Paweł Gos": {role:"CEO · Exact x Forestall · CC2 Kraków", bio:"Branża HR i rekrutacyjna. Członek Corporate Connections, grupa CC2 Kraków."},
+  "Agnieszka Radwańska i Mariusz Wójcicki": {role:"Mincer · BNI+", bio:"Właściciele marki Mincer. Członkowie BNI+."},
+  "Edward Łukosz": {role:"Polskie Mięso i Wędliny „Łukosz” · CC1 Kraków", bio:"Branża spożywcza. Reprezentuje klub Podbeskidzie Bielsko-Biała. Członek Corporate Connections, grupa CC1 Kraków."},
+  "Piotr Więckowski": {role:"Orlen Oil Motor Lublin · BNI+ Lublin", bio:"Branża sportowa i rekreacyjna. Członek BNI+, grupa BNI+ Lublin."},
+  "Robert Korzeniowski": {role:"Fundacja Roberta Korzeniowskiego", bio:"Moderator panelu \"Mecz o wszystko\" oraz prelegent Power Speech."},
+  "Prof. Witold Orłowski": {role:"Power Speech", bio:"Propozycja wystąpienia: \"Dług, deficyt, podatki — ile jeszcze państwo może wziąć z kieszeni przedsiębiorcy\"."},
+  "Krzysztof Mędrala": {role:"Chief Development Officer", bio:"Prowadzi spotkanie wprowadzające dla Gości."},
+  "Jakub Marczyński": {role:"Współprowadzący spotkanie wprowadzające", bio:"Współprowadzi spotkanie wprowadzające dla Gości wraz z Krzysztofem Mędralą."},
+  "Jakub Nowiński": {role:"Grupa MAK · Branża ubezpieczeniowa", bio:"Propozycja prelegenta ścieżki \"Cyberbezpieczeństwo i NIS2\"."},
+  "Jacek Węgrzynek": {role:"IT Punkt · BNI+ Katowice", bio:"Propozycja prelegenta ścieżki \"Cyberbezpieczeństwo i NIS2\"."},
+  "Pekao SA": {role:"Partner instytucjonalny", bio:"Propozycja prelegenta ścieżki \"Cyberbezpieczeństwo i NIS2\"."},
+  "Michał Zaborowski": {role:"KKZ · CC6 Warszawa", bio:"Propozycja prelegenta ścieżki \"Nowelizacja PIP\"."},
+  "Róża Szafranek": {role:"HR Hints · BNI+ Katowice", bio:"Branża HR i rekrutacyjna. Propozycja prelegentki ścieżki \"Nowelizacja PIP\"."},
+  "EY": {role:"Partner instytucjonalny", bio:"Propozycja prelegenta ścieżki \"Nowelizacja PIP\"."},
+  "Google / FOTC": {role:"Partner instytucjonalny", bio:"Propozycja prelegenta ścieżki \"AI w firmie\"."},
+  "Artur Banach": {role:"Movens Capital · CC2 Kraków", bio:"Branża inwestycyjna. Propozycja prelegenta ścieżki \"AI w firmie\"."},
+  "Tomasz Skowronek": {role:"4K Development · CC3 Kraków", bio:"Branża nieruchomości. Propozycja prelegenta ścieżki \"AI w firmie\"."},
+  "Wojciech Buczkowski": {role:"Komputronik S.A. · CC1 Warszawa", bio:"Branża IT i oprogramowanie. Propozycja prelegenta ścieżki \"AI w firmie\"."},
+  "Patryk Wyczółkowski": {role:"Prowadzący round tables", bio:"Współprowadzi spotkania 1 na 1 w formule round tables w ramach Akademii Rozwoju."},
+  "Małgosia Słupska-Mądry": {role:"Prowadząca round tables", bio:"Współprowadzi spotkania 1 na 1 w formule round tables w ramach Akademii Rozwoju."},
+  "Dominika Żak": {role:"dominikazak.pl", bio:"Prelegentka wystąpienia \"Jak budować markę osobistą w social mediach?\"."},
+  "Wojciech S. Wocław": {role:"Power Speech", bio:"Prelegent wystąpienia \"Savoir vivre przy stole\"."}
+};
+
+/* ===================== AGENDA — DANE (1:1 z dokumentem Word, wersja aktualna) =====================
+   origin: "common" (wspólne dla obu ścieżek), "biz" (Agenda biznesowa), "aka" (Akademia Rozwoju) */
+function it(origin,start,end,title,opts={}){
+  return Object.assign({origin,start,end,title,place:"",desc:"",note:"",speakers:[],subitems:null}, opts);
+}
+
+const DAYS = [
+  { key:"pt", name:"PIĄTEK", date:"6.11.2026", count:"25 pozycji programu",
+    items:[
+      it("common","10:00","12:00","Rejestracja, networking"),
+      it("biz","10:00","12:00","Spotkanie Zarządów Grup"),
+      it("biz","11:30","12:00","Spotkanie wprowadzające dla Gości",{place:"Sala Moon", desc:"Jak wyciągnąć najwięcej wartości z Business Weekendu?", speakers:["Krzysztof Mędrala","Jakub Marczyński"]}),
+      it("common","12:00","13:15","Lunch"),
+      it("aka","13:15","13:30","Rozpoczęcie Akademii Rozwoju"),
+      it("biz","13:15","15:15","Spotkania 1 na 1",{desc:"Moderowane przez Zespół CC i BNI+."}),
+      it("aka","13:30","14:20","Power speech: Savoir vivre przy stole",{speakers:["Wojciech S. Wocław"]}),
+      it("aka","14:20","15:10","Power speech: Campus AI"),
+      it("common","15:15","15:45","Przerwa kawowa i networking"),
+      it("common","15:45","16:15","Rozpoczęcie wydarzenia"),
+      it("biz","16:15","17:15","Panel: Mój przełom - kiedy biznes zaczął się skalować",{speakers:["Artur Beck","Przemysław Krych","Piotr Witek","Dawid Pyszniak (moderacja)"]}),
+      it("aka","16:15","18:30","The Art of Heritage",{desc:"Koniaków Craftsmanship × Moët Hennessy"}),
+      it("biz","17:15","17:45","Przerwa kawowa"),
+      it("biz","17:45","18:25","Fire Chat - Think Tank The Company",{speakers:["Adam Malinowski (moderacja)"]}),
+      it("common","18:30","19:55","Czas wolny"),
+      it("common","19:55","20:25","Networking"),
+      it("common","20:30","23:30","Kolacja powitalna"),
+    ]
+  },
+  { key:"so", name:"SOBOTA", date:"7.11.2026", count:"29 pozycji programu",
+    items:[
+      it("common","07:30","09:55","Śniadanie"),
+      it("aka","10:00","11:30","Spotkania 1 na 1 - round tables",{speakers:["Patryk Wyczółkowski","Małgosia Słupska-Mądry"]}),
+      it("biz","10:00","12:00","Spotkania 1 na 1"),
+      it("aka","11:30","11:45","Przerwa kawowa"),
+      it("aka","11:45","12:40","Power speech - Robert Korzeniowski",{speakers:["Robert Korzeniowski"]}),
+      it("biz","12:00","12:30","Przerwa kawowa"),
+      it("biz","12:30","13:00","Fire Chat: Ekspansja biznesu - jakich błędów nie popełniać?",{note:"Propozycja rozmówców – max 2 Członków.", speakers:["Mateusz Gromek","Jakub Nowak","Adam Rudowski"]}),
+      it("aka","12:40","13:30","Wystąpienie: Jak budować markę osobistą w social mediach?",{place:"https://dominikazak.pl/", speakers:["Dominika Żak"]}),
+      it("biz","13:00","13:30","Fire Chat - Boom M&A i konsolidacji - czas kupować albo być kupionym",{note:"Propozycja rozmówców – max 2 Członków.", speakers:["Jakub Swadźba","Adam Rudowski","Wawrzyniec Rajchel","Paweł Gos"]}),
+      it("common","13:30","15:00","Lunch"),
+      it("common","15:00","16:00","Panel dyskusyjny: Mecz o wszystko - czego biznes może się nauczyć od sportu",{speakers:["Agnieszka Radwańska i Mariusz Wójcicki","Edward Łukosz","Piotr Więckowski","Robert Korzeniowski (moderacja)"]}),
+      it("biz","16:00","16:45","Power speech: prof. Witold Orłowski",{place:"primespeakers.pl/speakers/witold-orlowski", desc:"Propozycja wystąpienia: Dług, deficyt, podatki - ile jeszcze państwo może wziąć z kieszeni przedsiębiorcy.", speakers:["Prof. Witold Orłowski"]}),
+      it("aka","16:00","18:00","Scent Lab by MO61 -- Masterclass Perfum",{desc:"Masterclass perfum - niszowe doświadczenie: komponowanie własnego, unikalnego zapachu pod okiem eksperta, z użyciem składników najwyższej jakości."}),
+      it("biz","16:45","17:00","Przerwa kawowa"),
+      it("biz","17:00","18:15","Ścieżki tematyczne",{desc:"W ramach każdej ścieżki tematycznej planujemy podzielić program na 3–4 bloki, w każdym z których wystąpi inny członek — dzięki temu więcej osób ma szansę podzielić się swoją wiedzą i doświadczeniem, a uczestnicy zyskują różnorodność perspektyw zamiast jednego prelegenta na całą ścieżkę.",
+        subitems:[
+          { title:"Cyberbezpieczeństwo i NIS2", desc:"Największym ryzykiem firmy jest dziś nie hacker, a jeden klik pracownika — cyberfraud, phishing i podatności związane z AI są wysoko na agendzie każdego CEO. Warsztat operacyjny „co realnie trzeba zrobić w 90 dni” — samoidentyfikacja obowiązku, rejestracja w wykazie i pierwsze kroki wdrożeniowe, nie teoria przepisów.", speakers:["Jakub Nowiński","Jacek Węgrzynek","Pekao SA"] },
+          { title:"Nowelizacja PIP - co zmienia się dla firm?", desc:"Warsztat operacyjny „czy i jak moja firma jest dziś narażona” — samoocena ryzyka przekwalifikowania umów B2B, zlecenia i o dzieło, i co zrobić w 12-miesięcznym oknie abolicji, zanim zrobi to inspektor.", speakers:["Michał Zaborowski","Róża Szafranek","EY"] },
+          { title:"AI w firmie - mapa zastosowań, case'y i błędy wdrożeniowe", desc:"Warsztat „co dziś realnie działa, a co nie”, nie prezentacja o ChatGPT ani o sprzedaży — mapa zastosowań AI w całej firmie (finanse, operacje, dokumentacja, HR, obsługa, nie tylko dział handlowy), prawdziwe business case'y z bazy TC, najczęstsze błędy wdrożeniowe i jeden temat, który już teraz definiuje 2026 rok.", speakers:["Google / FOTC","Artur Banach","Tomasz Skowronek","Wojciech Buczkowski","Adam Rudowski (jeżeli nie weźmie udziału w innych pozycjach agendy)"] },
+        ]}),
+      it("common","18:00","20:45","Czas wolny + networking / integracja",{desc:"Akademia Rozwoju od 18:00, Agenda Biznesowa od 18:15."}),
+      it("common","20:45","21:15","Get Together"),
+      it("common","21:15","00:15","Uroczysta kolacja"),
+      it("common","00:15","02:45","Afterparty"),
+    ]
+  },
+  { key:"nd", name:"NIEDZIELA", date:"8.11.2026", count:"8 pozycji programu",
+    items:[
+      it("common","07:30","10:00","Śniadanie networkingowe"),
+      it("common","09:00","10:00","Spotkanie podsumowujące dla Gości"),
+      it("biz","10:00","12:30","Spacer z przewodnikiem / off road 4x4"),
+      it("aka","10:00","12:30","Spacer z przewodnikiem / Mercedes"),
+      it("common","12:30","15:00","Lunch / Grill"),
+    ]
+  }
+];
+
+/* ===================== RENDER ===================== */
+let uid=0;
+
+function personRows(list){
+  return `<div class="team-grid">${(list||[]).map(name=>{
+    uid++;
+    const pid = "pp"+uid;
+    const key = name.replace(/\s*\(.*\)$/,"").trim();
+    const extra = name.match(/\((.*)\)$/);
+    const p = PEOPLE[key];
+    const roleText = p ? p.role : (extra?extra[1]:'Do potwierdzenia');
+    const hasBio = p && p.bio;
+    return `<div class="person-row" id="${pid}">
+      <div class="person-head">
+        <span class="person-name">${name}</span>
+        <span class="person-role">${roleText}</span>
+        ${hasBio?`<span class="chev small" onclick="event.stopPropagation();togglePerson('${pid}')">▾</span>`:""}
+      </div>
+      ${hasBio?`<div class="person-detail"><div class="person-bio">${p.bio}</div></div>`:""}
+    </div>`;
+  }).join("")}</div>`;
+}
+
+function renderSubitems(subitems){
+  return `<div class="subitems">${subitems.map((si,idx)=>{
+    uid++;
+    const bid = "sb"+uid;
+    return `<div class="dec-row">
+      <div class="dec-row-head" onclick="toggleBody('${bid}')">
+        <div class="dec-num">${idx+1}</div>
+        <div class="dec-text"><strong>${si.title}</strong>Kliknij, aby rozwinąć opis</div>
+        <div class="chev" id="${bid}-chev">▾</div>
+      </div>
+      <div class="dec-below">
+        ${personRows(si.speakers)}
+        <div class="dec-body" id="${bid}"><div class="tl-detail" style="padding-top:8px">${si.desc}</div></div>
+      </div>
+    </div>`;
+  }).join("")}</div>`;
+}
+
+function itemContent(item){
+  uid++;
+  const bid = "b"+uid;
+  const hasToggle = !!item.desc;
+  return `
+    <div class="item-head ${hasToggle?'clickable':''}" ${hasToggle?`onclick="toggleDesc(this,'${bid}')"`:''}>
+      <span class="item-time">${item.start}–${item.end}</span>
+      <span class="item-title">${item.title}</span>
+      ${item.origin==='common'?'<span class="common-badge">Wspólne</span>':''}
+      ${hasToggle?'<span class="chev">▾</span>':''}
+    </div>
+    ${item.place?`<div class="tl-place">${item.place}</div>`:""}
+    ${item.speakers&&item.speakers.length?personRows(item.speakers):""}
+    ${item.subitems?renderSubitems(item.subitems):""}
+    ${hasToggle?`<div class="tl-body" id="${bid}"><div class="tl-detail">${item.desc}</div></div>`:""}
+    ${item.note?`<div class="tl-note">${item.note}</div>`:""}
+  `;
+}
+
+/* Grupowanie w bloki między punktami wspólnymi; gdy jedna strona ma 1 pozycję
+   a druga kilka w tym samym czasie — dłuższa pozycja dostaje rowspan ("kwadrat"),
+   a druga strona pokazuje swoje pozycje osobno, wiersz po wierszu. */
+function buildBlockRows(bizList, akaList){
+  const out = [];
+  if(bizList.length===0 && akaList.length===0) return out;
+  if(bizList.length<=1 && akaList.length<=1){
+    out.push({biz:bizList[0]||null, aka:akaList[0]||null, bizRowspan:1, akaRowspan:1});
+    return out;
+  }
+  if(bizList.length===1 && akaList.length>1){
+    akaList.forEach((a,i)=> out.push({biz:i===0?bizList[0]:null, aka:a, bizRowspan:i===0?akaList.length:0, akaRowspan:1}));
+    return out;
+  }
+  if(akaList.length===1 && bizList.length>1){
+    bizList.forEach((b,i)=> out.push({biz:b, aka:i===0?akaList[0]:null, bizRowspan:1, akaRowspan:i===0?bizList.length:0}));
+    return out;
+  }
+  const n = Math.max(bizList.length, akaList.length);
+  for(let i=0;i<n;i++){
+    out.push({biz:bizList[i]||null, aka:akaList[i]||null, bizRowspan:1, akaRowspan:1});
+  }
+  return out;
+}
+
+function groupDay(day){
+  const rows = [];
+  let bizBuf=[], akaBuf=[];
+  function flush(){
+    if(bizBuf.length===0 && akaBuf.length===0) return;
+    buildBlockRows(bizBuf, akaBuf).forEach(r=> rows.push(Object.assign({type:"pair"}, r)));
+    bizBuf=[]; akaBuf=[];
+  }
+  day.items.forEach(item=>{
+    if(item.origin==="common"){
+      flush();
+      rows.push({type:"common", start:item.start, end:item.end, item});
+    } else if(item.origin==="biz"){
+      bizBuf.push(item);
+    } else {
+      akaBuf.push(item);
+    }
+  });
+  flush();
+  return rows;
+}
+
+function timeLabel(row){
+  if(row.bizRowspan>1) return row.aka.start+"–"+row.aka.end;
+  if(row.akaRowspan>1) return row.biz.start+"–"+row.biz.end;
+  const items=[row.biz,row.aka].filter(Boolean);
+  if(items.length===0) return "";
+  let start = items[0].start, end = items[0].end;
+  items.forEach(i=>{ if(i.start<start) start=i.start; if(i.end>end) end=i.end; });
+  return start+"–"+end;
+}
+
+function renderRow(row){
+  if(row.type==="common"){
+    return `<tr class="row-common">
+      <td class="time-cell">${row.start}–${row.end}</td>
+      <td colspan="2" class="common-cell">${itemContent(row.item)}</td>
+    </tr>`;
+  }
+  let cells = `<td class="time-cell">${timeLabel(row)}</td>`;
+  if(row.bizRowspan!==0){
+    cells += `<td class="${row.biz?'biz-cell':'empty-cell'}"${row.bizRowspan>1?` rowspan="${row.bizRowspan}"`:''}>${row.biz?itemContent(row.biz):''}</td>`;
+  }
+  if(row.akaRowspan!==0){
+    cells += `<td class="${row.aka?'aka-cell':'empty-cell'}"${row.akaRowspan>1?` rowspan="${row.akaRowspan}"`:''}>${row.aka?itemContent(row.aka):''}</td>`;
+  }
+  return `<tr>${cells}</tr>`;
+}
+
+function renderDay(day){
+  const rows = groupDay(day);
+  return `<div class="section" style="padding:0 40px 28px">
+    <table class="agenda-table">
+      <colgroup><col class="time-col"><col class="content-col"><col class="content-col"></colgroup>
+      <thead><tr>
+        <th class="time-head">Oś czasu</th>
+        <th>Agenda Biznesowa</th>
+        <th class="aka-head">Akademia Rozwoju</th>
+      </tr></thead>
+      <tbody>${rows.map(renderRow).join("")}</tbody>
+    </table>
+  </div>`;
+}
+
+function init(){
+  const tabsEl = document.getElementById("tabs");
+  const panelsEl = document.getElementById("panels");
+  tabsEl.innerHTML = DAYS.map((d,i)=>`
+    <div class="day-card ${i===0?'active':''}" onclick="showDay(${i})" id="tab${i}">
+      <div class="dec-label">Dzień</div>
+      <div class="day-name">${d.name}</div>
+      <div class="day-date">${d.date}</div>
+      <div class="day-count">${d.count}</div>
+    </div>`).join("");
+  panelsEl.innerHTML = DAYS.map((d,i)=>`<div class="day-panel ${i===0?'active':''}" id="panel${i}">${renderDay(d)}</div>`).join("");
+}
+
+function showDay(i){
+  DAYS.forEach((_,j)=>{
+    document.getElementById("tab"+j).classList.toggle("active", j===i);
+    document.getElementById("panel"+j).classList.toggle("active", j===i);
+  });
+}
+function toggleDesc(headEl, id){
+  headEl.classList.toggle("open");
+  document.getElementById(id).classList.toggle("open");
+}
+function toggleBody(id){
+  document.getElementById(id).classList.toggle("open");
+  const chev = document.getElementById(id+"-chev");
+  if(chev) chev.parentElement.classList.toggle("open");
+}
+function togglePerson(id){
+  document.getElementById(id).classList.toggle("open");
+}
+
+init();
+</script>
+</body>
+</html>
